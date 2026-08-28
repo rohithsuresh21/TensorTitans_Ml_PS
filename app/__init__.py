@@ -1,0 +1,1 @@
+"""SentinelIQ - local AI security gateway with human-in-the-loop alerts."""

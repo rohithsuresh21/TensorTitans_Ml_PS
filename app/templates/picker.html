@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Zone Picker - SentinelIQ{% endblock %}
+{% block content %}
+
+<div class="max-w-6xl">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+    <h1 class="font-display text-xl md:text-2xl font-bold tracking-widest text-white">RESTRICTED <span class="text-emerald-400">ZONE MAPPER</span></h1>
+    <div class="flex gap-2">
+      <button id="btnReload" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">⟳ RELOAD</button>
+      <button id="btnNew" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">＋ NEW ZONE</button>
+      <button id="btnClear" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition">CLEAR POINTS</button>
+      <button id="btnSave" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition">SAVE ZONE</button>
+    </div>
+  </div>
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <p class="text-xs font-mono text-slate-500">CLICK CORNERS IN ORDER ON CURRENT STREAM SNAPSHOT</p>
+    <input id="zoneName" value="Restricted Zone" placeholder="Zone name" class="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+  </div>
+
+  <div class="relative bg-black rounded-2xl border border-white/10 overflow-hidden">
+    <canvas id="zoneCanvas" class="w-full"></canvas>
+    <div id="pickerBusy" class="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur text-sm font-mono text-slate-400">
+      <span class="animate-pulse">ACQUIRING FRAME FROM STREAM…</span>
+    </div>
+  </div>
+
+  <div id="toast" class="space-y-1 mt-3"></div>
+
+  <div class="mt-4">
+    <h3 class="text-xs font-mono tracking-widest text-slate-400 mb-2">SAVED ZONES · ACTIVE ZONE DRIVES ENGINE</h3>
+    <div id="zoneList" class="grid grid-cols-1 md:grid-cols-3 gap-2"></div>
+  </div>
+</div>
+
+<script src="/static/picker.js"></script>
+{% endblock %}

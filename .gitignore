@@ -3,6 +3,7 @@
 
 # Model files
 *.pt
+*.engine
 
 # Video files
 *.mp4
@@ -35,3 +36,9 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Runtime artifacts
+*.db
+server.pid
+media/
+evidence/
