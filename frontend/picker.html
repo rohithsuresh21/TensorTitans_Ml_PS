@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zone Picker - SentinelIQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Orbitron','sans-serif'], sans: ['Manrope','sans-serif'], mono: ['JetBrains Mono','monospace'] } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="bg-[#05070d] text-slate-200 font-sans min-h-screen relative overflow-x-hidden">
+
+  <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5 bg-[#05070d]/70 px-5 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="/static/icon.svg" alt="SentinelIQ" class="w-9 h-9 drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]" />
+      <span class="font-display font-bold tracking-[0.25em] text-lg text-white">
+        SENTINEL<span class="text-emerald-400">IQ</span>
+      </span>
+      <span class="hidden md:inline-block text-[10px] font-mono tracking-widest text-slate-500 border border-white/10 rounded px-1.5 py-0.5 ml-1">CLOUD GW</span>
+    </div>
+
+    <div class="flex items-center gap-2 md:gap-3">
+      <a href="/dashboard" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Command</a>
+      <a href="/zone-picker" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition text-emerald-400 border-emerald-400/30 bg-emerald-400/5">Zones</a>
+      <a href="/settings" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Settings</a>
+      <a href="/api/logout" onclick="return signOut(event)" class="px-3 py-1.5 text-xs rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition">Sign out</a>
+    </div>
+  </nav>
+
+  <main class="relative z-10 max-w-[1600px] mx-auto p-4 md:p-6">
+
+<div class="max-w-6xl">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+    <h1 class="font-display text-xl md:text-2xl font-bold tracking-widest text-white">RESTRICTED <span class="text-emerald-400">ZONE MAPPER</span></h1>
+    <div class="flex gap-2">
+      <button id="btnReload" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">⟳ RELOAD</button>
+      <button id="btnNew" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">＋ NEW ZONE</button>
+      <button id="btnClear" class="px-3 py-1.5 text-xs font-mono rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition">CLEAR POINTS</button>
+      <button id="btnSave" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition">SAVE ZONE</button>
+    </div>
+  </div>
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <p class="text-xs font-mono text-slate-500">CLICK CORNERS IN ORDER ON CURRENT STREAM SNAPSHOT</p>
+    <input id="zoneName" value="Restricted Zone" placeholder="Zone name" class="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+  </div>
+
+  <div class="relative bg-black rounded-2xl border border-white/10 overflow-hidden">
+    <canvas id="zoneCanvas" class="w-full"></canvas>
+    <div id="pickerBusy" class="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur text-sm font-mono text-slate-400">
+      <span class="animate-pulse">ACQUIRING FRAME FROM STREAM…</span>
+    </div>
+  </div>
+
+  <div id="toast" class="space-y-1 mt-3"></div>
+
+  <div class="mt-4">
+    <h3 class="text-xs font-mono tracking-widest text-slate-400 mb-2">SAVED ZONES · ACTIVE ZONE DRIVES ENGINE</h3>
+    <div id="zoneList" class="grid grid-cols-1 md:grid-cols-3 gap-2"></div>
+  </div>
+</div>
+
+  </main>
+
+  <script>
+    function signOut(e) {
+      e.preventDefault();
+      fetch('/api/logout', { method: 'POST' }).then(function () { window.location.href = '/login'; });
+      return false;
+    }
+  </script>
+  <script src="/static/picker.js"></script>
+</body>
+</html>

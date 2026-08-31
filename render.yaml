@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sentineliq-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: python run.py
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: RUN_ENGINE
+        value: "0"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: "8000"
+      - key: LOG_LEVEL
+        value: info

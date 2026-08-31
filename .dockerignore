@@ -1,0 +1,16 @@
+.git
+.env
+.gitignore
+__pycache__
+evidence/
+media/
+data/
+models/
+videos/
+*.db
+*.log
+server.pid
+*.md
+!Dockerfile
+*.pt
+*.engine

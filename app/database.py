@@ -16,6 +16,9 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 import config
 
 Base = declarative_base()
+_db_dir = os.path.dirname(os.path.abspath(config.DATABASE_PATH))
+if _db_dir:
+    os.makedirs(_db_dir, exist_ok=True)
 _engine = create_engine(
     f"sqlite:///{config.DATABASE_PATH}", connect_args={"check_same_thread": False}
 )
@@ -176,6 +179,15 @@ def create_session(user_id: int) -> str:
         try:
             token = secrets.token_hex(32)
             s.add(AuthSession(token=token, user_id=user_id))
+            # Keep the session table bounded (old rows can linger after logout).
+            for row in (
+                s.query(AuthSession)
+                .filter_by(user_id=user_id)
+                .order_by(AuthSession.id.desc())
+                .offset(20)
+                .all()
+            ):
+                s.delete(row)
             s.commit()
             return token
         finally:

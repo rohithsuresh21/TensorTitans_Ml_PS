@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Command - SentinelIQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Orbitron','sans-serif'], sans: ['Manrope','sans-serif'], mono: ['JetBrains Mono','monospace'] } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="bg-[#05070d] text-slate-200 font-sans min-h-screen relative overflow-x-hidden">
+
+  <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5 bg-[#05070d]/70 px-5 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="/static/icon.svg" alt="SentinelIQ" class="w-9 h-9 drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]" />
+      <span class="font-display font-bold tracking-[0.25em] text-lg text-white">
+        SENTINEL<span class="text-emerald-400">IQ</span>
+      </span>
+      <span class="hidden md:inline-block text-[10px] font-mono tracking-widest text-slate-500 border border-white/10 rounded px-1.5 py-0.5 ml-1">CLOUD GW</span>
+    </div>
+
+    <div class="flex items-center gap-2 md:gap-3">
+      <a href="/dashboard" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition text-emerald-400 border-emerald-400/30 bg-emerald-400/5">Command</a>
+      <a href="/zone-picker" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Zones</a>
+      <a href="/settings" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Settings</a>
+      <a href="/api/logout" onclick="return signOut(event)" class="px-3 py-1.5 text-xs rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition">Sign out</a>
+    </div>
+  </nav>
+
+  <main class="relative z-10 max-w-[1600px] mx-auto p-4 md:p-6">
+
+<div class="space-y-4">
+
+  <!-- header -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="font-display text-xl md:text-2xl font-bold tracking-widest text-white">SENTINEL<span class="text-emerald-400">IQ</span> COMMAND</h1>
+      <p id="clockLine" class="text-xs font-mono text-slate-500 mt-0.5">--:--:-- · SYNCHRONIZED</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <span id="fpsChip" class="font-mono text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">FPS --</span>
+      <span id="modelChip" class="font-mono text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">MODEL --</span>
+      <span id="resChip" class="font-mono text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">--×--</span>
+      <div id="bigStatus" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-xs tracking-widest border-slate-600/40 text-slate-400 bg-white/5">
+        <span class="dot w-2 h-2 rounded-full bg-slate-500"></span><span>DISARMED</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- live row -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
+        <div class="flex items-center gap-2">
+          <span class="rec-dot w-2 h-2 rounded-full bg-red-500"></span>
+          <span id="recChip" class="text-xs font-mono tracking-widest text-slate-300">REC</span>
+        </div>
+        <span id="camLabel" class="text-xs font-mono text-slate-500">camera · --</span>
+      </div>
+      <div class="relative bg-black aspect-[16/9]">
+        <img id="liveStream" src="/api/stream" alt="Live" class="w-full h-full object-contain" />
+        <div class="absolute top-3 left-3 px-2 py-0.5 text-[10px] font-mono bg-black/60 backdrop-blur rounded border border-white/10">LIVE FEED</div>
+        <div class="absolute bottom-3 left-3 px-2 py-0.5 text-[10px] font-mono bg-black/60 backdrop-blur rounded border border-red-500/30 text-red-300" id="alertChip">STANDBY</div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-mono tracking-widest text-slate-400">THREAT INDEX</span>
+        <span id="threatPct" class="text-2xl font-bold font-mono text-slate-100">0</span>
+      </div>
+      <div class="relative mx-auto my-2">
+        <svg viewBox="0 0 200 120" class="w-full max-w-[220px]">
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1f2937" stroke-width="14" stroke-linecap="round" />
+          <path id="gaugeArc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#10b981" stroke-width="14" stroke-linecap="round"
+                stroke-dasharray="100" stroke-dashoffset="100" pathLength="100" style="transition: stroke-dashoffset .6s ease, stroke .4s ease" />
+        </svg>
+        <div class="absolute inset-x-0 bottom-1 text-center">
+          <span class="font-mono text-[9px] tracking-[0.3em] text-slate-600">SAFE · MODERATE · CRITICAL</span>
+        </div>
+      </div>
+
+      <div id="violations" class="space-y-2 text-xs my-3"></div>
+
+      <div class="space-y-3">
+        <div class="flex items-center justify-between rounded-lg bg-white/5 border border-white/10 px-3 py-2">
+          <span class="text-xs text-slate-400">ARM / DISARM</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input id="armToggle" type="checkbox" class="sr-only peer" />
+            <div class="w-12 h-6 rounded-full bg-slate-700 peer-checked:bg-emerald-500/80 transition relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-6"></div>
+          </label>
+        </div>
+        <div id="scheduleNote" class="text-[10px] font-mono text-slate-500 text-center">SCHEDULE: MANUAL</div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="postJSON('/api/dismiss')" class="rounded-lg py-2 text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition">CLEAR COOLDOWN</button>
+          <button onclick="postJSON('/api/alarm')" class="rounded-lg py-2 text-xs font-semibold bg-red-500/10 text-red-300 border border-red-500/20 hover:bg-red-500/20 transition">ON-SITE ALARM</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex justify-between items-start">
+        <span class="text-[10px] font-mono text-slate-500 tracking-widest">INTRUSIONS</span>
+        <span class="text-emerald-400 text-xs">IN ZONE</span>
+      </div>
+      <p id="kpiIntruders" class="kpi-val text-4xl font-bold mt-2 text-emerald-400 font-mono">0</p>
+      <div class="mt-2 h-1 rounded bg-white/5 overflow-hidden"><div id="barIntruders" class="h-full bg-emerald-400/70 transition-all duration-700" style="width:0%"></div></div>
+    </div>
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex justify-between items-start">
+        <span class="text-[10px] font-mono text-slate-500 tracking-widest">HANDS-UP</span>
+        <span class="text-yellow-400 text-xs">COMPLIANCE</span>
+      </div>
+      <p id="kpiHands" class="kpi-val text-4xl font-bold mt-2 text-yellow-400 font-mono">0</p>
+      <div class="mt-2 h-1 rounded bg-white/5 overflow-hidden"><div id="barHands" class="h-full bg-yellow-400/70 transition-all duration-700" style="width:0%"></div></div>
+    </div>
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex justify-between items-start">
+        <span class="text-[10px] font-mono text-slate-500 tracking-widest">FAINTS</span>
+        <span class="text-red-400 text-xs">MEDICAL</span>
+      </div>
+      <p id="kpiFaints" class="kpi-val text-4xl font-bold mt-2 text-red-400 font-mono">0</p>
+      <div class="mt-2 h-1 rounded bg-white/5 overflow-hidden"><div id="barFaints" class="h-full bg-red-400/70 transition-all duration-700" style="width:0%"></div></div>
+    </div>
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex justify-between items-start">
+        <span class="text-[10px] font-mono text-slate-500 tracking-widest">ALERTS</span>
+        <span id="weaponBadge" class="text-red-400 text-xs hidden">⚠ WEAPON</span>
+      </div>
+      <p id="kpiAlerts" class="kpi-val text-4xl font-bold mt-2 text-slate-100 font-mono">0</p>
+      <div id="weaponLine" class="mt-2 text-[10px] font-mono text-red-400 truncate"></div>
+    </div>
+  </div>
+
+  <!-- charts row -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-mono tracking-widest text-slate-400">ACTIVITY INTENSITY</span>
+        <span class="text-[10px] font-mono text-slate-600">LIVE · 2s SAMPLING</span>
+      </div>
+      <div class="relative h-44"><canvas id="activityChart"></canvas></div>
+    </div>
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <span class="text-xs font-mono tracking-widest text-slate-400">INCIDENT MIX</span>
+      <div class="relative h-44 mt-2"><canvas id="mixChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- intelligence row -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden">
+      <div class="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
+        <span class="text-xs font-mono tracking-widest text-slate-400">LATEST INTRUSION</span>
+        <span id="lastEvTime" class="text-[10px] font-mono text-slate-600">--</span>
+      </div>
+      <div class="relative bg-black aspect-video" id="lastEvWrap">
+        <div class="absolute inset-0 flex items-center justify-center text-xs font-mono text-slate-600">WAITING FOR FIRST EVENT</div>
+      </div>
+      <div class="p-4 space-y-2">
+        <div id="lastEvItems" class="flex flex-wrap gap-1 min-h-[1.25rem]"></div>
+        <div id="lastEvMeta" class="text-[10px] font-mono text-slate-500 leading-relaxed"></div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-mono tracking-widest text-slate-400">CARRIED ITEMS</span>
+        <span id="carriedVer" class="text-[10px] font-mono text-slate-600">--</span>
+      </div>
+      <div id="carriedWrap">
+        <div class="text-xs font-mono text-slate-600 py-6 text-center">SCANNING INTRUDER CROPS FOR CARRIED ITEMS</div>
+      </div>
+      <div class="mt-4 rounded-lg bg-white/[0.03] border border-white/10 px-3 py-2">
+        <div class="flex items-center justify-between text-[10px] font-mono text-slate-500"><span>ARM CLASSIFICATION</span></div>
+        <p id="carriedRisk" class="font-display font-bold tracking-widest text-sm mt-1.5 text-slate-400">UNAVAILABLE</p>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-mono tracking-widest text-slate-400">RECENT ALERTS</span>
+        <span class="text-[10px] font-mono text-slate-600">CARRIED-ITEM ANALYSIS</span>
+      </div>
+      <div id="alertFeed" class="events-scroll space-y-2 max-h-72 overflow-y-auto pr-1">
+        <div class="text-xs font-mono text-slate-600 py-6 text-center">NO ALERT EVENTS YET</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- evidence row -->
+  <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-mono tracking-widest text-slate-400">EVIDENCE CAPTURE · INTRUSION FORENSICS</span>
+      <span class="text-[10px] font-mono text-slate-600">CLICK A CAPTURE TO VIEW FULLSCREEN</span>
+    </div>
+    <div id="evidenceGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div class="col-span-full text-center text-xs font-mono text-slate-600 py-6">NO EVIDENCE CAPTURES YET — INTRUSIONS WILL BE LOGGED HERE WITH CARRIED-ITEM ANALYSIS</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- fullscreen evidence viewer -->
+<div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/95 backdrop-blur-sm">
+  <button id="lbClose" class="absolute top-4 right-4 w-10 h-10 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 text-lg transition">✕</button>
+  <div class="w-full max-w-5xl max-h-[92vh] flex flex-col">
+    <div class="relative flex-1 min-h-0 flex items-center justify-center bg-black/60 rounded-xl overflow-hidden border border-white/10">
+      <img id="lbImg" src="" alt="Evidence" class="max-w-full max-h-[62vh] object-contain" />
+    </div>
+    <div id="lbMeta" class="mt-3 flex flex-wrap items-center gap-2 text-xs font-mono"></div>
+  </div>
+</div>
+
+  </main>
+
+  <footer class="relative z-10 max-w-[1600px] mx-auto px-6 pb-6 flex items-center justify-between text-[10px] font-mono text-slate-600">
+    <span>&#9664; PRESENT-CONTEXT TELEMETRY</span>
+    <span>TensorTitans ML · SentinelIQ v2</span>
+  </footer>
+
+  <script>
+    async function signOut(e) {
+      e.preventDefault();
+      try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); } catch (err) {}
+      window.location.href = '/login';
+      return false;
+    }
+  </script>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

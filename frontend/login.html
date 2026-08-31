@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SENTINELIQ · Secure Terminal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Orbitron','sans-serif'], sans: ['Manrope','sans-serif'], mono: ['JetBrains Mono','monospace'] } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .grid-floor { background-image:
+      linear-gradient(rgba(52,211,153,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(52,211,153,0.07) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .cursor-blink { animation: blink 1.1s step-end infinite; }
+    @keyframes floatUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+    .rise { animation: floatUp .7s ease-out both; }
+    @keyframes spin-slow { from { transform: rotate(0) } to { transform: rotate(360deg) } }
+    .spin-slow { animation: spin-slow 14s linear infinite; }
+    .corner::before, .corner::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid #10b981; }
+    .corner::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+    .corner::after { bottom: 0; right: 0; border-left: none; border-top: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#04060c] text-slate-100 font-sans relative overflow-hidden">
+  <div class="absolute inset-0 grid-floor opacity-70"></div>
+  <div class="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full bg-emerald-500/10 blur-[120px]"></div>
+  <div class="absolute -bottom-48 -left-40 w-[520px] h-[520px] rounded-full bg-cyan-500/10 blur-[130px]"></div>
+
+  <div class="relative z-10 min-h-screen grid lg:grid-cols-2">
+    <!-- brand side -->
+    <div class="hidden lg:flex flex-col justify-center px-14 2xl:px-24 rise">
+      <div class="flex items-center gap-3 mb-6">
+        <img src="/static/icon.svg" alt="SentinelIQ" class="w-14 h-14 drop-shadow-[0_0_18px_rgba(52,211,153,0.55)]" />
+        <div>
+          <h1 class="font-display font-bold tracking-[0.3em] text-2xl text-white">SENTINEL<span class="text-emerald-400">IQ</span></h1>
+          <p class="font-mono text-[10px] tracking-[0.35em] text-slate-500 mt-1">AI SECURITY GATEWAY</p>
+        </div>
+      </div>
+
+      <p class="text-slate-400 max-w-md leading-relaxed mb-8">
+        Local GPU inference, RTSP &amp; CCTV ingestion, restricted-zone enforcement and
+        human-in-the-loop escalation — all behind one authenticated command surface.
+      </p>
+
+      <ul class="space-y-3 font-mono text-xs text-slate-400">
+        <li class="flex items-center gap-3"><span class="text-emerald-400">▸</span> YOLO11 pose · GPU-accelerated · 50+ FPS</li>
+        <li class="flex items-center gap-3"><span class="text-emerald-400">▸</span> Click-to-define restricted zones</li>
+        <li class="flex items-center gap-3"><span class="text-emerald-400">▸</span> Carried-item &amp; weapon forensics</li>
+        <li class="flex items-center gap-3"><span class="text-emerald-400">▸</span> Telegram 911 / Police / Ambulance dispatch</li>
+        <li class="flex items-center gap-3"><span class="text-emerald-400">▸</span> Evidence capture with timestamps</li>
+      </ul>
+    </div>
+
+    <!-- access panel -->
+    <div class="flex items-center justify-center p-6 sm:p-10">
+      <div class="w-full max-w-md rise" style="animation-delay:.15s">
+        <div class="corner relative rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur p-8">
+          <div class="flex items-center justify-center mb-2 lg:hidden">
+            <h1 class="font-display font-bold tracking-[0.25em] text-xl text-white">SENTINEL<span class="text-emerald-400">IQ</span></h1>
+          </div>
+          <div class="text-center mb-7">
+            <p class="font-mono text-[10px] tracking-[0.4em] text-emerald-400/80">RESTRICTED ACCESS</p>
+            <h2 class="font-display font-bold tracking-widest text-lg text-white mt-2">OPERATOR<span class="text-emerald-400"> SIGN-IN</span></h2>
+            <p class="font-mono text-[10px] text-slate-600 mt-1">AUTHORIZATION REQUIRED <span class="cursor-blink text-emerald-400">_</span></p>
+          </div>
+
+          <form id="loginForm" class="space-y-5">
+            <div>
+              <label class="block font-mono text-[10px] tracking-[0.3em] text-slate-500 mb-1.5">USERNAME / OPERATOR ID</label>
+              <div class="flex items-center gap-3 bg-black/40 border border-white/10 rounded-lg px-3 focus-within:border-emerald-400/60 transition">
+                <span class="text-emerald-400/70">⌨</span>
+                <input id="username" name="username" required autofocus autocomplete="username"
+                       class="w-full bg-transparent py-2.5 font-mono text-sm focus:outline-none placeholder:text-slate-700" placeholder="admin" />
+              </div>
+            </div>
+            <div>
+              <label class="block font-mono text-[10px] tracking-[0.3em] text-slate-500 mb-1.5">PASSKEY</label>
+              <div class="flex items-center gap-3 bg-black/40 border border-white/10 rounded-lg px-3 focus-within:border-emerald-400/60 transition">
+                <span class="text-emerald-400/70">✦</span>
+                <input id="password" name="password" type="password" required autocomplete="current-password"
+                       class="w-full bg-transparent py-2.5 font-mono text-sm focus:outline-none placeholder:text-slate-700" placeholder="••••••••" />
+              </div>
+            </div>
+
+            <p id="loginErr" class="hidden text-red-400 font-mono text-xs tracking-wider">⛔ ACCESS DENIED — INVALID CREDENTIALS</p>
+            <p id="loginWait" class="hidden text-emerald-400/70 font-mono text-xs tracking-wider">⏳ VERIFYING CREDENTIALS…</p>
+
+            <button id="loginBtn" type="submit"
+                    class="w-full group font-display font-bold tracking-[0.3em] text-sm text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg py-3 transition shadow-[0_0_24px_rgba(16,185,129,0.35)]">
+              ENTER COMMAND &nbsp;<span class="inline-block group-hover:translate-x-1 transition">→</span>
+            </button>
+          </form>
+
+          <p class="text-center font-mono text-[9px] tracking-[0.3em] text-slate-600 mt-6">SENTINELIQ SECURE CLOUD CONSOLE · ENCRYPTED SESSION</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errEl = document.getElementById('loginErr');
+    const waitEl = document.getElementById('loginWait');
+    const btn = document.getElementById('loginBtn');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.classList.add('hidden');
+      waitEl.classList.remove('hidden');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+          }),
+        });
+        if (res.ok) {
+          window.location.href = '/dashboard';
+          return;
+        }
+        waitEl.classList.add('hidden');
+        btn.disabled = false;
+        errEl.classList.remove('hidden');
+      } catch (err) {
+        waitEl.classList.add('hidden');
+        btn.disabled = false;
+        errEl.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+/* SentinelIQ base styles (Tailwind covers most; this holds custom bits). */
+
+@keyframes recBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+.rec-dot { animation: recBlink 1.2s infinite; }
+
+.kpi-val { font-variant-numeric: tabular-nums; }
+
+body {
+  background:
+    radial-gradient(1000px 500px at 80% -10%, rgba(16, 185, 129, 0.05), transparent),
+    radial-gradient(800px 400px at 10% 110%, rgba(16, 185, 129, 0.04), transparent),
+    #05070d;
+}
+
+.events-scroll::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(52, 211, 153, 0.4); }
+
+input[type="range"] { accent-color: #10b981; }

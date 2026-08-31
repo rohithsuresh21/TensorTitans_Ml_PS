@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings - SentinelIQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Orbitron','sans-serif'], sans: ['Manrope','sans-serif'], mono: ['JetBrains Mono','monospace'] } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="bg-[#05070d] text-slate-200 font-sans min-h-screen relative overflow-x-hidden">
+
+  <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5 bg-[#05070d]/70 px-5 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="/static/icon.svg" alt="SentinelIQ" class="w-9 h-9 drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]" />
+      <span class="font-display font-bold tracking-[0.25em] text-lg text-white">
+        SENTINEL<span class="text-emerald-400">IQ</span>
+      </span>
+      <span class="hidden md:inline-block text-[10px] font-mono tracking-widest text-slate-500 border border-white/10 rounded px-1.5 py-0.5 ml-1">CLOUD GW</span>
+    </div>
+
+    <div class="flex items-center gap-2 md:gap-3">
+      <a href="/dashboard" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Command</a>
+      <a href="/zone-picker" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Zones</a>
+      <a href="/settings" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition text-emerald-400 border-emerald-400/30 bg-emerald-400/5">Settings</a>
+      <a href="/api/logout" onclick="return signOut(event)" class="px-3 py-1.5 text-xs rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition">Sign out</a>
+    </div>
+  </nav>
+
+  <main class="relative z-10 max-w-[1600px] mx-auto p-4 md:p-6">
+
+<div class="max-w-4xl">
+  <h1 class="font-display text-xl md:text-2xl font-bold tracking-widest text-white mb-1">CONTROL <span class="text-emerald-400">ROOM</span></h1>
+  <p class="text-xs font-mono text-slate-500 mb-6">CONFIGURE STREAM · MODEL · ALERTS · SCHEDULE</p>
+
+  <div class="flex gap-1 mb-4 border-b border-white/10 overflow-x-auto">
+    <button data-tab="stream" class="tab-btn px-4 py-2 text-xs font-mono tracking-widest text-slate-400 active:text-emerald-400 border-b-2 border-transparent">STREAM</button>
+    <button data-tab="model" class="tab-btn px-4 py-2 text-xs font-mono tracking-widest text-slate-400 active:text-emerald-400 border-b-2 border-transparent">MODEL</button>
+    <button data-tab="alerts" class="tab-btn px-4 py-2 text-xs font-mono tracking-widest text-slate-400 active:text-emerald-400 border-b-2 border-transparent">ALERTS</button>
+    <button data-tab="schedule" class="tab-btn px-4 py-2 text-xs font-mono tracking-widest text-slate-400 active:text-emerald-400 border-b-2 border-transparent">SCHEDULE</button>
+    <button data-tab="system" class="tab-btn px-4 py-2 text-xs font-mono tracking-widest text-red-400 active:text-red-400 border-b-2 border-transparent">SYSTEM</button>
+  </div>
+
+  <div id="tab-stream" class="tab-panel space-y-5">
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5">
+      <h2 class="text-sm font-semibold text-white mb-4">Camera Source</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <label class="opt rounded-xl border border-white/10 p-3 flex items-center gap-2 cursor-pointer hover:border-emerald-400/40 transition">
+          <input type="radio" name="srcType" value="rtsp" class="accent-emerald-500" />
+          <span class="text-xs"><span class="font-semibold text-slate-200">CCTV / RTSP</span><br /><span class="text-slate-500">live IP camera</span></span>
+        </label>
+        <label class="opt rounded-xl border border-white/10 p-3 flex items-center gap-2 cursor-pointer hover:border-emerald-400/40 transition">
+          <input type="radio" name="srcType" value="video" class="accent-emerald-500" />
+          <span class="text-xs"><span class="font-semibold text-slate-200">Local video file</span><br /><span class="text-slate-500">path on this machine</span></span>
+        </label>
+        <label class="opt rounded-xl border border-white/10 p-3 flex items-center gap-2 cursor-pointer hover:border-emerald-400/40 transition">
+          <input type="radio" name="srcType" value="upload" class="accent-emerald-500" />
+          <span class="text-xs"><span class="font-semibold text-slate-200">Upload video</span><br /><span class="text-slate-500">mp4 / avi / mkv</span></span>
+        </label>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">CAMERA NAME</label>
+          <input id="camera_name" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+        </div>
+        <div id="srcUrlWrap" class="hidden">
+          <label class="block text-xs font-mono text-slate-500 mb-1">RTSP STREAM URL</label>
+          <input id="rtsp_value" placeholder="rtsp://user:pass@192.168.1.64:554/stream1" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+        </div>
+        <div id="srcFileWrap" class="hidden">
+          <label class="block text-xs font-mono text-slate-500 mb-1">FILE PATH OR USE UPLOAD</label>
+          <input id="file_value" placeholder="C:\videos\theft.mp4" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+        </div>
+        <div id="srcUploadWrap" class="hidden">
+          <label class="block text-xs font-mono text-slate-500 mb-1">UPLOAD VIDEO</label>
+          <input id="fileInput" type="file" accept=".mp4,.avi,.mkv,.mov,.webm"
+                 class="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-300 file:px-3 file:py-2 file:text-xs file:font-semibold hover:file:bg-emerald-500/30" />
+          <p id="uploadStatus" class="text-xs font-mono text-slate-500 mt-1 h-4"></p>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <span id="resolveChip" class="text-[10px] font-mono text-slate-500 truncate max-w-full border border-white/10 rounded px-2 py-1">source --
+@--</span>
+        <button id="btnTest" class="text-xs font-mono px-3 py-1.5 rounded-lg border border-emerald-400/30 text-emerald-300 hover:bg-emerald-400/10 transition">TEST SOURCE</button>
+        <button id="btnApply" class="text-xs font-semibold px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition">APPLY SOURCE</button>
+      </div>
+      <p id="srcMsg" class="text-xs text-emerald-400 h-4 mt-1"></p>
+    </div>
+  </div>
+
+  <div id="tab-model" class="tab-panel hidden space-y-5">
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5 space-y-4">
+      <h2 class="text-sm font-semibold text-white">Detection Engine</h2>
+      <div>
+        <label class="block text-xs font-mono text-slate-500 mb-1">MODEL FILE</label>
+        <div class="flex gap-2">
+          <select id="model_file" class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50"></select>
+          <button id="btnDefaultModel" class="px-4 py-2 text-xs font-mono rounded-lg border border-emerald-400/30 text-emerald-300 hover:bg-emerald-400/10 transition">USE DEFAULT</button>
+        </div>
+        <p class="text-[10px] font-mono text-slate-600 mt-1">DEFAULT engine loads yolo11m-pose (.engine → .pt). Model changes reload in seconds — CPU if no GPU file.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">CONFIDENCE (0–1)</label>
+          <input id="model_conf" type="number" step="0.05" min="0.05" max="0.95" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">IMG SIZE (px)</label>
+          <input id="model_imgsz" type="number" step="32" min="320" max="960" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">FRAME SKIP</label>
+          <input id="frame_skip" type="number" min="1" max="10" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">FAINT THRESHOLD (sec)</label>
+          <input id="faint_seconds" type="number" min="3" max="120" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">ALERT COOLDOWN (sec)</label>
+          <input id="msg_cooldown" type="number" min="0" max="600" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <label class="flex items-center justify-between cursor-pointer rounded-xl border border-white/10 p-3">
+        <span class="text-sm text-slate-300">Carried-item detection <span class="text-[10px] font-mono text-slate-500">(weapon/edge scan on intrusion)</span></span>
+        <input id="item_detector" type="checkbox" class="w-5 h-5 accent-emerald-500" />
+      </label>
+      <div class="flex items-center gap-3">
+        <button id="btnResetTuning" class="px-4 py-2 text-xs font-mono rounded-lg border border-amber-400/30 text-amber-300 hover:bg-amber-400/10 transition">RESET TUNING TO DEFAULTS</button>
+        <span id="tuneMsg" class="text-xs text-emerald-400 font-mono"></span>
+      </div>
+      <p class="text-[10px] font-mono text-slate-600">CURRENT: <span id="modelChip2">--</span> · smaller imgsz / higher skip = faster GPU throughput</p>
+    </div>
+  </div>
+
+  <div id="tab-alerts" class="tab-panel hidden space-y-5">
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5 space-y-4">
+      <h2 class="text-sm font-semibold text-white">Telegram HIL Alerts</h2>
+      <div>
+        <label class="block text-xs font-mono text-slate-500 mb-1">BOT TOKEN</label>
+        <input id="telegram_token" type="password" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono" />
+      </div>
+      <div>
+        <label class="block text-xs font-mono text-slate-500 mb-1">CHAT ID</label>
+        <input id="telegram_chat_id" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono" />
+      </div>
+      <div>
+        <label class="block text-xs font-mono text-slate-500 mb-1">EMERGENCY PHONE (tel: link)</label>
+        <input id="emergency_number" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <label class="flex items-center justify-between cursor-pointer rounded-xl border border-white/10 p-3">
+        <span class="text-sm text-slate-300">Local speaker beep on in-zone violation</span>
+        <input id="audio_enabled" type="checkbox" class="w-5 h-5 accent-emerald-500" />
+      </label>
+    </div>
+  </div>
+
+  <div id="tab-schedule" class="tab-panel hidden space-y-5">
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5 space-y-4">
+      <h2 class="text-sm font-semibold text-white">Active Mode Scheduler</h2>
+      <label class="flex items-center justify-between cursor-pointer rounded-xl border border-white/10 p-3">
+        <span class="text-sm text-slate-300">Manually armed</span>
+        <input id="manual_armed" type="checkbox" class="w-5 h-5 accent-emerald-500" />
+      </label>
+      <label class="flex items-center justify-between cursor-pointer rounded-xl border border-white/10 p-3">
+        <span class="text-sm text-slate-300">Enable time-based auto-arm</span>
+        <input id="schedule_enabled" type="checkbox" class="w-5 h-5 accent-emerald-500" />
+      </label>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">ARM FROM</label>
+          <input id="schedule_start" type="time" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-mono text-slate-500 mb-1">ARM UNTIL</label>
+          <input id="schedule_end" type="time" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <p class="text-[10px] font-mono text-slate-600">OUTSIDE SCHEDULE + DISARMED → INFERENCE SKIPPED (GPU IDLE)</p>
+    </div>
+  </div>
+
+  <div id="tab-system" class="tab-panel hidden space-y-5">
+    <div class="rounded-2xl bg-white/[0.03] border border-white/10 p-5 space-y-4">
+      <h2 class="text-sm font-semibold text-white">System Maintenance</h2>
+      <div class="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="text-sm text-slate-200 font-semibold">Clear database &amp; start fresh</p>
+            <p class="text-[10px] font-mono text-slate-500 mt-1">Wipes all evidence records, restricted zones and settings. Re-seeds factory defaults. Admin account is kept. Evidence image files stay on disk.</p>
+          </div>
+          <button id="btnClearDb" class="px-4 py-2 text-xs font-semibold rounded-lg bg-red-500/15 text-red-300 border border-red-500/30 hover:bg-red-500/25 transition">CLEAR DATABASE</button>
+        </div>
+        <p id="clearMsg" class="text-xs font-mono text-emerald-400 mt-2 h-4"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-6 flex items-center gap-3">
+    <button id="saveAll" class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition">SAVE CONFIGURATION</button>
+    <span id="saveMsg" class="text-sm text-emerald-400 font-mono"></span>
+  </div>
+</div>
+
+  </main>
+
+  <script>
+    function signOut(e) {
+      e.preventDefault();
+      fetch('/api/logout', { method: 'POST' }).then(function () { window.location.href = '/login'; });
+      return false;
+    }
+  </script>
+  <script src="/static/settings.js"></script>
+</body>
+</html>

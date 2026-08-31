@@ -1,0 +1,12 @@
+# GPU override - merge with base file:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+# Requires: NVIDIA driver + nvidia-container-toolkit (GPU Passthrough in Docker Desktop).
+services:
+  sentineliq:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

@@ -1,12 +1,15 @@
 """SentinelIQ FastAPI web server."""
 
+import os
 import shutil
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from fastapi import FastAPI, File, Request, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
     FileResponse,
     HTMLResponse,
@@ -30,13 +33,24 @@ engine = DetectionEngine()
 bot = TelegramAlertBot(engine=engine)
 engine.alert_handler = bot.submit
 
+# Frame shown by /api/snapshot and /api/stream when the CV engine is disabled
+# or not running on this host (remote "control-shell" deployments).
+OFFLINE_FRAME = str(BASE_DIR / "static" / "offline-frame.jpg")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
-    engine.start()
-    bot.start()
-    print(f"SentinelIQ running at http://127.0.0.1:{config.PORT}  (user: {config.DEFAULT_ADMIN_USER})")
+    if config.RUN_ENGINE:
+        engine.start()
+        bot.start()
+        loc = "LIVE ENGINE"
+    else:
+        loc = "REMOTE SHELL (no engine)"
+    print(
+        f"SentinelIQ running at http://{config.HOST}:{config.PORT}  "
+        f"(user: {config.DEFAULT_ADMIN_USER}, env={config.APP_ENV}, mode={loc})"
+    )
     yield
     engine.stop()
     bot.stop()
@@ -45,6 +59,33 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="SentinelIQ", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+if config.CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=config.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+
+# --- security middleware ------------------------------------------------------
+
+
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    if config.ALLOWED_HOSTS:
+        host = (request.headers.get("host") or "").split(":")[0].strip().lower()
+        if host and host not in config.ALLOWED_HOSTS:
+            return JSONResponse({"detail": "Invalid Host header"}, status_code=400)
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("X-XSS-Protection", "0")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    return response
 
 
 # --- auth helpers ------------------------------------------------------------
@@ -99,7 +140,45 @@ async def login(request: Request):
         return RedirectResponse("/login?error=invalid", status_code=303)
     token = db.create_session(user.id)
     resp = RedirectResponse("/dashboard", status_code=303)
-    resp.set_cookie("session", token, httponly=True, samesite="lax")
+    resp.set_cookie(
+        "session",
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=config.COOKIE_SECURE,
+        max_age=config.SESSION_MAX_AGE,
+    )
+    return resp
+
+
+@app.post("/api/login")
+async def api_login(request: Request):
+    """JSON login for the static (Vercel) frontend; sets the session cookie."""
+    body = await request.json()
+    user = db.authenticate(body.get("username", ""), body.get("password", ""))
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = db.create_session(user.id)
+    resp = JSONResponse({"status": "ok", "user": user.username})
+    resp.set_cookie(
+        "session",
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=config.COOKIE_SECURE,
+        max_age=config.SESSION_MAX_AGE,
+        path="/",
+    )
+    return resp
+
+
+@app.post("/api/logout")
+def api_logout(request: Request):
+    token = _session_token(request)
+    if token:
+        db.delete_session(token)
+    resp = JSONResponse({"status": "ok"})
+    resp.delete_cookie("session", path="/")
     return resp
 
 
@@ -147,17 +226,29 @@ def api_status(request: Request):
     require_auth(request)
     status = engine.status()
     status["settings"] = db.get_settings()
+    status["live"] = config.RUN_ENGINE and engine.is_running()
     return status
+
+
+def _live_frame() -> Optional[bytes]:
+    """Return the current annotated JPEG, or the offline banner when the CV
+    engine is absent/stopped (remote shell deployment)."""
+    if config.RUN_ENGINE and engine.is_running() and engine.get_snapshot() is not None:
+        return engine.get_snapshot()
+    if os.path.exists(OFFLINE_FRAME):
+        with open(OFFLINE_FRAME, "rb") as fh:
+            return fh.read()
+    return None
 
 
 @app.get("/api/snapshot")
 def api_snapshot(request: Request):
     require_auth(request)
-    jpeg = engine.get_snapshot()
-    if jpeg is None:
+    frame = _live_frame()
+    if frame is None:
         raise HTTPException(status_code=503, detail="No frame available")
     return Response(
-        content=jpeg,
+        content=frame,
         media_type="image/jpeg",
         headers={"Cache-Control": "no-store"},
     )
@@ -169,18 +260,14 @@ def api_stream(request: Request):
         return Response(status_code=401)
 
     def generate():
-        last_id = -1
+        frame = _live_frame()
         while True:
-            frame_id = engine.latest_jpeg_frame_id
-            if frame_id != last_id:
-                jpeg = engine.get_snapshot()
-                if jpeg is not None:
-                    last_id = frame_id
-                    yield (
-                        b"--frame\r\n"
-                        b"Content-Type: image/jpeg\r\n\r\n" + jpeg + b"\r\n"
-                    )
-            time.sleep(0.05)
+            if frame is not None:
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+                )
+            time.sleep(0.5)
 
     return StreamingResponse(
         generate(),
@@ -322,10 +409,13 @@ def api_evidence_image(alert_id: int, request: Request):
 @app.get("/api/models")
 def api_models(request: Request):
     require_auth(request)
-    root = BASE_DIR.parent
+    roots = [BASE_DIR.parent]
+    if config.MODELS_DIR:
+        roots.append(Path(config.MODELS_DIR))
     names = set()
-    for pat in ("*.pt", "*.engine"):
-        names.update(f.name for f in Path(root).glob(pat) if f.is_file())
+    for root in roots:
+        for pat in ("*.pt", "*.engine"):
+            names.update(f.name for f in Path(root).glob(pat) if f.is_file())
     names = sorted(n for n in names if "yolo" in n.lower())
     current = (db.get_setting("model_file") or "").strip()
     items = [{"name": "DEFAULT", "path": "", "is_default": True, "active": current == ""}]

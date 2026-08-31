@@ -6,6 +6,8 @@ latest frame, and pushes alert events with evidence (snapshot + carried-item sca
 to an injected handler.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import sys
@@ -14,10 +16,21 @@ import time
 from datetime import datetime
 from typing import Callable, Optional
 
-import cv2
-import numpy as np
-import supervision as sv
-from ultralytics import YOLO
+# Make the heavy vision stack optional so the same codebase can deploy as a
+# "shell" (Vercel/Render control-plane) without torch/opencv/supervision.
+try:
+    import cv2
+    import numpy as np
+    import supervision as sv
+    from ultralytics import YOLO
+
+    VISION_OK = True
+except Exception:  # pragma: no cover - shell deployments
+    cv2 = None
+    np = None
+    sv = None
+    YOLO = None
+    VISION_OK = False
 
 import config
 from app import database as db
@@ -31,8 +44,8 @@ WEAPON_CLASSES = {43, 76, 34, 36, 38}  # knife, scissors, bat, skateboard, tenni
 ITEM_DETECTOR = "yolo11n.pt"
 BEEP_INTERVAL = 1.2  # seconds between sustained in-zone beeps
 VIEWER_WINDOW = 6.0  # viewer considered active while heartbeat within this window
-EVIDENCE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "evidence")
-MEDIA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "media")
+EVIDENCE_DIR = config.EVIDENCE_DIR
+MEDIA_DIR = config.MEDIA_DIR
 
 
 class AlertEvent:
@@ -526,6 +539,8 @@ class DetectionEngine:
         return self._fetch_still()
 
     def _fetch_still(self) -> Optional[bytes]:
+        if not VISION_OK or cv2 is None:
+            return None
         cap = cv2.VideoCapture(self.active_source or config.VIDEO_PATH)
         if not cap.isOpened():
             return None
