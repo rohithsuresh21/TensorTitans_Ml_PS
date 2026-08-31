@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://sentineliq-api.onrender.com/api/:path*"
+      "destination": "https://sentineliq-api-ndfx.onrender.com/api/:path*"
     },
     {
       "source": "/login",
