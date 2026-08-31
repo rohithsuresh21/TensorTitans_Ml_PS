@@ -12,7 +12,8 @@
 #
 # This script downloads cloudflared.exe (a single ~55MB binary) on first run.
 param(
-    [string]$Target = "http://localhost:8000"
+    [string]$Target = "http://localhost:8000",
+    [switch]$SkipVercel
 )
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
@@ -67,7 +68,7 @@ if (-not $Url) {
 $Url | Set-Content $UrlFile
 Write-Host ""
 Write-Host "[tunnel] TUNNEL READY: $Url" -ForegroundColor Green
-Write-Host "[tunnel] Paste this URL into frontend/vercel.json (/api rewrite 'destination') then redeploy Vercel." -ForegroundColor Yellow
+Write-Host "[tunnel] URL saved to trycloudflare-url.txt" -ForegroundColor Cyan
 
 # Verify end-to-end health through the tunnel.
 try {
@@ -76,4 +77,18 @@ try {
 }
 catch {
     Write-Host "[tunnel] health check failed - is the server running on $Target ?" -ForegroundColor Red
+}
+
+# Auto-wire Vercel to the new (random) URL and redeploy, unless -SkipVercel.
+if (-not $SkipVercel) {
+    if (Get-Command vercel -ErrorAction SilentlyContinue) {
+        Write-Host ""
+        Write-Host "[tunnel] updating Vercel to this URL..." -ForegroundColor Cyan
+        & (Join-Path $Root "scripts\update-vercel.ps1")
+    }
+    else {
+        Write-Host ""
+        Write-Host "[tunnel] 'vercel' CLI not found - install with: npm i -g vercel" -ForegroundColor Yellow
+        Write-Host "[tunnel] then paste $Url into frontend/vercel.json (/api destination) and run: vercel --prod" -ForegroundColor Yellow
+    }
 }
