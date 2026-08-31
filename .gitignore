@@ -40,5 +40,14 @@ Desktop.ini
 # Runtime artifacts
 *.db
 server.pid
+server.out
+server.err
+tunnel.pid
+tunnel.out
+tunnel.err
 media/
 evidence/
+
+# Cloudflare quick-tunnel binary (download via scripts/start-tunnel.ps1)
+cloudflared.exe
+trycloudflare-url.txt

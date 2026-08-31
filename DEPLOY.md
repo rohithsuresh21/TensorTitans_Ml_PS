@@ -115,6 +115,36 @@ server {
 
 Also expose the `/health` endpoint to your monitoring stack.
 
+## 3b. Public dashboard via Vercel + Cloudflare Tunnel (live engine stays local)
+
+The web UI (auth, dashboard, settings, zone picker, evidence) is a static site
+deployed on Vercel in `frontend/`. Its `/api/*` calls are rewritten to a backend
+origin. There are **two** ways to wire that origin:
+
+**Option A - Render shell (control plane, no live feed):**
+- Deploy the repo on Render (`render.yaml`) with `RUN_ENGINE=0`. Auth, settings,
+  zones and evidence work, but `/api/snapshot` and `/api/stream` return an offline
+  placeholder frame (`app/static/offline-frame.jpg`).
+- Point `frontend/vercel.json` `/api/:path*` at `https://<your-service>.onrender.com`.
+
+**Option B - Cloudflare Tunnel (live feed, recommended):**
+- Keep the full engine running on your own machine with `RUN_ENGINE=1` and expose
+  port 8000 to the internet with a public (random) HTTPS URL:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts\start-tunnel.ps1
+  ```
+  (First run downloads `cloudflared.exe`. Prints a `*.trycloudflare.com` URL and
+  health-checks it for you. Save it in `trycloudflare-url.txt`.)
+- The random URL changes on every restart: copy it into `frontend/vercel.json`
+  (`/api/:path*` -> `destination`) and redeploy Vercel. For a permanent URL,
+  create a named Cloudflare Tunnel bound to your own domain instead of the
+  quick tunnel.
+- Because traffic reaches the API over HTTPS through Cloudflare, also set
+  `COOKIE_SECURE=1` in the local `.env` so sessions prefer the Secure cookie.
+
+Deploy the static site once from `frontend/` on Vercel (root directory
+`frontend`, Framework Preset "Other", output directory `.`). No build is needed.
+
 ## 4. Model placement
 
 - Pose model: `yolo11m-pose.pt` (or a `.engine` TensorRT build for speed).
