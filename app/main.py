@@ -108,6 +108,8 @@ def _current_user(request: Request):
 
 
 def require_auth(request: Request):
+    if config.PUBLIC_MODE:
+        return None
     user = _current_user(request)
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -115,6 +117,8 @@ def require_auth(request: Request):
 
 
 def _authed(request: Request) -> bool:
+    if config.PUBLIC_MODE:
+        return True
     return _current_user(request) is not None
 
 

@@ -34,7 +34,7 @@ if (Test-Path $PidFile) {
     $OldProc = Get-Process -Id $OldPid -ErrorAction SilentlyContinue
     if ($OldProc) {
         Write-Host "[tunnel] stopping existing tunnel (PID $OldPid)..." -ForegroundColor Yellow
-        Stop-Process -Id $OldPid -Force
+        & taskkill /F /T /PID $OldPid 2>$null | Out-Null
         Start-Sleep -Seconds 2
     }
 }
@@ -42,20 +42,36 @@ if (Test-Path $PidFile) {
 Remove-Item $OutLog, $ErrLog -Force -ErrorAction SilentlyContinue
 
 Write-Host "[tunnel] exposing $Target ..." -ForegroundColor Cyan
-$p = Start-Process -FilePath $Exe -ArgumentList "tunnel --url $Target" `
-    -WorkingDirectory $Root -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog `
-    -WindowStyle Hidden -PassThru
-$p.Id | Set-Content $PidFile
-Write-Host "[tunnel] started PID $($p.Id), waiting for URL..." -ForegroundColor Cyan
+# Launch fully detached via WMI + a batch wrapper so cloudflared survives the
+# calling shell being killed (the bash tool / terminal may terminate the whole
+# process tree on timeout). run-tunnel.bat redirects output to tunnel.out/err.
+$Bat = Join-Path $PSScriptRoot "run-tunnel.bat"
+@"
+@echo off
+set EXE=$Exe
+"%EXE%" tunnel --url $Target --no-autoupdate 1> $OutLog 2> $ErrLog
+"@ | Set-Content $Bat -Encoding Ascii
+$Detached = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+    CommandLine = "cmd /c `"$Bat`""
+}
+$DetachedPid = $Detached.ProcessId
+if (-not $DetachedPid) {
+    Write-Host "[tunnel] FAILED to launch tunnel wrapper (WMI): $($Detached.ReturnValue)" -ForegroundColor Red
+    exit 1
+}
+$DetachedPid | Set-Content $PidFile
+Write-Host "[tunnel] started PID $DetachedPid, waiting for URL..." -ForegroundColor Cyan
 
 $Deadline = (Get-Date).AddSeconds(30)
 $Url = $null
 while ((Get-Date) -lt $Deadline) {
     Start-Sleep -Seconds 1
-    $match = Select-String -Path $ErrLog -Pattern "https://[a-z0-9-]+\.trycloudflare\.com" -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($match) {
-        $Url = ($match.Matches[0].Value -split " ")[0]
-        break
+    if (Test-Path $ErrLog) {
+        $match = Select-String -Path $ErrLog -Pattern "https://[a-z0-9-]+\.trycloudflare\.com" -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($match) {
+            $Url = ($match.Matches[0].Value -split " ")[0]
+            break
+        }
     }
 }
 

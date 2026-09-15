@@ -65,6 +65,11 @@ if not SECRET_KEY:
 SESSION_MAX_AGE = int(os.getenv("SESSION_MAX_AGE", str(60 * 60 * 12)))  # 12h
 COOKIE_SECURE = _get_bool("COOKIE_SECURE", APP_ENV == "prod")  # HTTPS-only cookie
 
+# Set PUBLIC_MODE=1 to open the whole app (live stream, dashboard, settings,
+# alarms, zones, evidence) WITHOUT login. Intended for demo builds. With it off,
+# every page/API requires a session. Login cookie is still available to owners.
+PUBLIC_MODE = _get_bool("PUBLIC_MODE", False)
+
 # Set TRUSTED_PROXY=1 when running behind a reverse proxy so protocol/host is
 # taken from X-Forwarded-* headers and forwarded IPs are accepted by uvicorn.
 TRUSTED_PROXY = _get_bool("TRUSTED_PROXY", False)
