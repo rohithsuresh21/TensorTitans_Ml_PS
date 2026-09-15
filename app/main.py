@@ -197,8 +197,8 @@ def logout(request: Request):
 
 
 @app.get("/", include_in_schema=False)
-def index_redirect():
-    return RedirectResponse("/dashboard", status_code=303)
+def index_page(request: Request):
+    return templates.TemplateResponse(request, "index.html", {"active": None})
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
