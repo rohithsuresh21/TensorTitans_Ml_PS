@@ -36,7 +36,7 @@ DEFAULT_SETTINGS = {
     "emergency_number": config.EMERGENCY_NUMBER,
     "stream_source_type": "video",
     "stream_source_value": config.VIDEO_PATH,
-    "camera_name": "Lobby Camera",
+    "camera_name": config.CAMERA_NAME,
     "model_conf": str(config.MODEL_CONF),
     "model_imgsz": str(config.MODEL_IMGSZ),
     "frame_skip": str(config.FRAME_SKIP),

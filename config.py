@@ -106,6 +106,8 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 EMERGENCY_NUMBER = os.getenv("EMERGENCY_NUMBER", "100")
 
+CAMERA_NAME = os.getenv("CAMERA_NAME", "SentinelIQ Demo Camera #1")
+
 # Default restricted zone (screen coordinates) seeding the first saved zone.
 DEFAULT_ZONE = [
     [179, 501],
