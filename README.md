@@ -29,6 +29,8 @@ Built by **TensorTitans ML** for hackathon and real-surveillance use alike.
 
 The demo runs a synthetic security feed at real inference speed. When the engine is offline, pages degrade gracefully to an offline placeholder instead of failing.
 
+![SentinelIQ live annotated frame](docs/screenshot.jpg)
+
 ---
 
 ## Architecture
