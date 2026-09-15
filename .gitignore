@@ -51,3 +51,10 @@ evidence/
 # Cloudflare quick-tunnel binary (download via scripts/start-tunnel.ps1)
 cloudflared.exe
 trycloudflare-url.txt
+
+# Local RTSP server (MediaMTX) + ffmpeg publisher
+mediamtx/
+mediamtx.zip
+mediamtx.pid
+publisher.pid
+publisher.err.log
