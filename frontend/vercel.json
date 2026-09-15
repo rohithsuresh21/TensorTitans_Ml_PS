@@ -7,7 +7,7 @@
     },
     {
       "source": "/login",
-      "destination": "/login.html"
+      "destination": "/dashboard.html"
     },
     {
       "source": "/dashboard",
