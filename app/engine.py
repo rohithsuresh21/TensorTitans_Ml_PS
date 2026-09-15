@@ -221,6 +221,12 @@ class DetectionEngine:
 
     def _pipeline(self) -> None:
         while not self._stop.is_set():
+            # Reload settings/source even when the current stream is dead, so a
+            # user-requested source switch takes effect while retrying.
+            try:
+                self._reload()
+            except Exception:
+                pass
             cap = cv2.VideoCapture(self.active_source)
             if not cap.isOpened():
                 print(f"[engine] cannot open stream: {self.active_source}")
