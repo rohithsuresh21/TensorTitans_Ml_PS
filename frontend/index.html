@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SentinelIQ - Real-Time CV Security</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { display: ['Orbitron','sans-serif'], sans: ['Manrope','sans-serif'], mono: ['JetBrains Mono','monospace'] } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <script>
+    async function refreshLive() {
+      try {
+        const r = await fetch('/api/status', { credentials: 'same-origin' });
+        if (!r.ok) throw new Error('status ' + r.status);
+        const s = await r.json();
+        const fps = document.getElementById('st-fps');
+        const model = document.getElementById('st-model');
+        const cam = document.getElementById('st-cam');
+        if (fps) fps.textContent = (s.fps != null ? s.fps.toFixed(0) : '--') + ' fps';
+        if (model) model.textContent = (s.model || 'yolo11m-pose');
+        if (cam) cam.textContent = s.camera || 'SentinelIQ Demo Camera #1';
+        const img = document.getElementById('hero-shot');
+        if (s.running && img) {
+          const snap = new Image();
+          snap.onload = function () { img.src = '/api/snapshot?ts=' + Date.now(); };
+          snap.onerror = function () {};
+          snap.src = img.src;
+        }
+      } catch (e) {
+        const fps = document.getElementById('st-fps');
+        if (fps) fps.textContent = 'offline';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      refreshLive();
+      setInterval(refreshLive, 4000);
+    });
+  </script>
+</head>
+<body class="bg-[#05070d] text-slate-200 font-sans min-h-screen relative overflow-x-hidden">
+
+  <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5 bg-[#05070d]/70 px-5 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="/static/icon.svg" alt="SentinelIQ" class="w-9 h-9 drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]" />
+      <span class="font-display font-bold tracking-[0.25em] text-lg text-white">
+        SENTINEL<span class="text-emerald-400">IQ</span>
+      </span>
+      <span class="hidden md:inline-block text-[10px] font-mono tracking-widest text-slate-500 border border-white/10 rounded px-1.5 py-0.5 ml-1">TENSORTITANS ML</span>
+    </div>
+    <div class="flex items-center gap-2 md:gap-3">
+      <a href="/dashboard" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Command Center</a>
+      <a href="#pipeline" class="hidden md:inline-block px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">Pipeline</a>
+      <a href="/dashboard" class="px-4 py-1.5 text-xs font-semibold uppercase tracking-widest rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition">Open Command Center</a>
+    </div>
+  </nav>
+
+  <main class="relative z-10">
+
+    <!-- hero -->
+    <section class="max-w-[1600px] mx-auto px-4 md:px-6 pt-16 md:pt-24 pb-12">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div>
+          <p class="font-mono text-[11px] tracking-widest text-emerald-400 uppercase">YOLO11 Pose &middot; RTSP &middot; Telegram HIL</p>
+          <h1 class="font-display font-black text-4xl md:text-6xl tracking-[0.08em] text-white mt-3">
+            SENTINEL<span class="text-emerald-400">IQ</span>
+          </h1>
+          <h2 class="font-display font-bold text-xl md:text-2xl tracking-wide text-slate-100 mt-4 leading-snug">
+            One camera stream. Every intrusion, faint, and carried weapon &mdash; caught in real time.
+          </h2>
+          <p class="mt-5 text-slate-400 max-w-xl leading-relaxed">
+            SentinelIQ runs YOLOv11 pose detection live on any CCTV/RTSP feed, classifies restricted-zone intrusions, scans intruders for carried items and weapons, and pushes instant alerts to your Telegram.
+          </p>
+          <div class="mt-8 flex flex-wrap items-center gap-4">
+            <a href="/dashboard" class="px-6 py-3 text-xs font-semibold uppercase tracking-widest rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition">Open Command Center</a>
+            <a href="#pipeline" class="px-6 py-3 text-xs font-semibold uppercase tracking-widest rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 transition">View the Pipeline</a>
+          </div>
+        </div>
+        <div>
+          <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-2">
+            <div class="rounded-xl overflow-hidden border border-white/10 relative">
+              <img id="hero-shot" src="/static/offline-frame.jpg" alt="Live annotated frame" class="w-full aspect-video object-cover" />
+              <div class="absolute top-3 left-3 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <span class="font-mono text-[10px] tracking-widest text-white bg-black/60 border border-white/20 rounded px-2 py-1 uppercase">Live Feed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- stats bar -->
+    <section class="max-w-[1600px] mx-auto px-4 md:px-6 pb-12">
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
+          <p class="font-mono text-[10px] tracking-widest text-slate-500 uppercase">Inference</p>
+          <p id="st-fps" class="font-display font-bold text-2xl md:text-3xl text-emerald-400 mt-1 transition-all duration-700">-- fps</p>
+        </div>
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
+          <p class="font-mono text-[10px] tracking-widest text-slate-500 uppercase">Model</p>
+          <p id="st-model" class="font-display font-bold text-2xl md:text-3xl text-white mt-1">yolo11m-pose</p>
+        </div>
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
+          <p class="font-mono text-[10px] tracking-widest text-slate-500 uppercase">Camera</p>
+          <p id="st-cam" class="font-display font-bold text-lg md:text-xl text-white mt-1 leading-snug">SentinelIQ Demo Camera #1</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- detects -->
+    <section class="max-w-[1600px] mx-auto px-4 md:px-6 py-10">
+      <p class="font-mono text-[11px] tracking-widest text-emerald-400 uppercase mb-8">Detects</p>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+          <p class="text-[10px] font-mono tracking-widest text-red-400 uppercase">01 &middot; Zone Breach</p>
+          <h3 class="font-display font-bold text-lg text-white mt-3 tracking-wide">Intrusion Detection</h3>
+          <p class="mt-3 text-sm text-slate-400 leading-relaxed">Restricted-zone breaches — a pose-tracking engine flags any person entering a mapped restricted polygon and logs it as a zone breach.</p>
+        </div>
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+          <p class="text-[10px] font-mono tracking-widest text-amber-400 uppercase">02 &middot; Compliance</p>
+          <h3 class="font-display font-bold text-lg text-white mt-3 tracking-wide">Faints &amp; Hands-up</h3>
+          <p class="mt-3 text-sm text-slate-400 leading-relaxed">Pose keypoints classify falls (faint) and compliant hands-up states, separating medical distress from surrender.</p>
+        </div>
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+          <p class="text-[10px] font-mono tracking-widest text-red-400 uppercase">03 &middot; Scan</p>
+          <h3 class="font-display font-bold text-lg text-white mt-3 tracking-wide">Carried-Item &amp; Weapon Scan</h3>
+          <p class="mt-3 text-sm text-slate-400 leading-relaxed">On intrusion, intruder crops are rescanned with a carried-item detector to flag knives, bats and other carried objects.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- how it works -->
+    <section id="pipeline" class="max-w-[1600px] mx-auto px-4 md:px-6 py-10">
+      <p class="font-mono text-[11px] tracking-widest text-emerald-400 uppercase mb-8">How It Works</p>
+      <div class="grid md:grid-cols-4 gap-4">
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+          <p class="font-display font-black text-3xl text-white/20">01</p>
+          <h4 class="font-mono text-xs tracking-widest text-white mt-3 uppercase">Stream</h4>
+          <p class="mt-2 text-sm text-slate-400">Connect any RTSP / CCTV / video source.</p>
+        </div>
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+          <p class="font-display font-black text-3xl text-white/20">02</p>
+          <h4 class="font-mono text-xs tracking-widest text-white mt-3 uppercase">Infer</h4>
+          <p class="mt-2 text-sm text-slate-400">YOLOv11 pose runs live, TensorRT-accelerated when a GPU is present.</p>
+        </div>
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+          <p class="font-display font-black text-3xl text-white/20">03</p>
+          <h4 class="font-mono text-xs tracking-widest text-white mt-3 uppercase">Decide</h4>
+          <p class="mt-2 text-sm text-slate-400">Restricted-zone + faint/arms classification gates every alert.</p>
+        </div>
+        <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
+          <p class="font-display font-black text-3xl text-white/20">04</p>
+          <h4 class="font-mono text-xs tracking-widest text-white mt-3 uppercase">Alert</h4>
+          <p class="mt-2 text-sm text-slate-400">Evidence + snapshot pushed to Telegram with a one-tap on-site alarm.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- about -->
+    <section class="max-w-[1600px] mx-auto px-4 md:px-6 py-10">
+      <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-8">
+        <p class="text-slate-400 leading-relaxed max-w-3xl">
+          Built for hackathons and real surveillance alike, SentinelIQ pairs a PyTorch pose model with a process-singleton CV engine, a hardened FastAPI backend, and a Telegram human-in-the-loop alert path — so a single camera can watch a room, a depot, or a restricted area and tell you the moment something is wrong.
+        </p>
+        <p class="mt-6 text-right text-[10px] font-mono tracking-widest text-slate-500 uppercase">TensorTitans ML</p>
+      </div>
+    </section>
+
+    <!-- footer -->
+    <footer class="border-t border-white/5 mt-6">
+      <div class="max-w-[1600px] mx-auto px-4 md:px-6 py-6 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono tracking-widest text-slate-500 uppercase">
+        <span>TensorTitans ML &middot; SentinelIQ</span>
+        <span>YOLO11 &middot; FastAPI &middot; Telegram HIL</span>
+      </div>
+    </footer>
+
+  </main>
+</body>
+</html>
